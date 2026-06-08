@@ -1,17 +1,17 @@
 name: Keep Supabase Alive
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
   workflow_dispatch: 
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '20'
       - run: npm install @supabase/supabase-js
       - run: |
           node -e "
@@ -19,8 +19,12 @@ jobs:
             const supabase = createClient('${{ secrets.SUPABASE_URL }}', '${{ secrets.SUPABASE_SERVICE_KEY }}');
             async function ping() {
               const { error } = await supabase.from('expenses').select('*').limit(1);
-              if (error) console.error('Ping failed:', error);
-              else console.log('Ping successful!');
+              if (error) {
+                console.error('Ping failed:', error);
+                process.exit(1);
+              } else {
+                console.log('Ping successful!');
+              }
             }
             ping();
           "
