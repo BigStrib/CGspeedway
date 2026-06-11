@@ -490,7 +490,7 @@ function renderDashboard() {
 
     summaryEl.innerHTML = ''
         + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-coins" style="color:var(--green)"></i> Total Spent</span><span class="s-value" style="color:var(--green)">$' + totalSpent.toFixed(2) + '</span></div>'
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-piggy-bank" style="color:var(--purple)"></i> Total Saved</span><span class="s-value" style="color:var(--purple)">$' + totalSaved.toFixed(2) + '</span></div>'
+        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-piggy-bank" style="color:var(--purple)"></i> Cancelled Event Total</span><span class="s-value" style="color:var(--purple)">$' + totalSaved.toFixed(2) + '</span></div>'
         + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-chart-line" style="color:var(--cyan)"></i> Avg per Event</span><span class="s-value" style="color:var(--cyan)">$' + avgCost.toFixed(2) + '</span></div>'
         + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-wallet" style="color:var(--amber)"></i> Total Potential</span><span class="s-value" style="color:var(--amber)">$' + totalPotential.toFixed(2) + '</span></div>'
         + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-percent" style="color:var(--blue)"></i> Attendance Rate</span><span class="s-value" style="color:var(--blue)">' + attendRate + '%</span></div>';
