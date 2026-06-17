@@ -254,6 +254,21 @@
                                 <input type="text" id="event-name" placeholder="e.g., Saturday Night Showdown" required maxlength="150">
                             </div>
 
+                            <!-- ── EVENT DESCRIPTION (new) ── -->
+                            <div class="form-field full-width">
+                                <label for="event-description">
+                                    <i class="fa-solid fa-align-left"></i> Event Description
+                                    <span class="field-optional">(optional)</span>
+                                </label>
+                                <textarea
+                                    id="event-description"
+                                    placeholder="e.g., Doors open at 6pm, VIP section included, bring ticket..."
+                                    maxlength="300"
+                                    rows="3"
+                                ></textarea>
+                                <span class="field-hint" id="description-char-count">0 / 300</span>
+                            </div>
+
                             <div class="form-field">
                                 <label for="event-date-input">
                                     <i class="fa-regular fa-calendar"></i> Event Date

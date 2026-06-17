@@ -8,9 +8,9 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // ============================================
 // STATE
 // ============================================
-let currentUser   = null;
-let events        = [];
-let currentFilter = 'all';
+let currentUser     = null;
+let events          = [];
+let currentFilter   = 'all';
 let pendingDeleteId = null;
 
 // ============================================
@@ -20,6 +20,7 @@ function qs(selector)  { return document.querySelector(selector); }
 function qsa(selector) { return document.querySelectorAll(selector); }
 
 function escapeHtml(str) {
+    if (!str) return '';
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
@@ -32,13 +33,8 @@ function parseFlexibleDate(input) {
     if (!input || !input.trim()) return null;
     let str = input.trim();
 
-    // Remove ordinal suffixes
     str = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
-
-    // Remove day names
     str = str.replace(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thur|thurs|fri|sat|sun)\b[,.]?\s*/gi, '');
-
-    // Clean commas and extra spaces
     str = str.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
 
     var months = {
@@ -50,7 +46,6 @@ function parseFlexibleDate(input) {
 
     var match, m, d, y;
 
-    // Month Day Year: "June 13 2026"
     match = str.match(/^([a-z]+)\s+(\d{1,2})\s+(\d{4})$/i);
     if (match) {
         m = months[match[1].toLowerCase()];
@@ -60,7 +55,6 @@ function parseFlexibleDate(input) {
         }
     }
 
-    // Day Month Year: "13 June 2026"
     match = str.match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
     if (match) {
         m = months[match[2].toLowerCase()];
@@ -70,21 +64,18 @@ function parseFlexibleDate(input) {
         }
     }
 
-    // MM/DD/YYYY or MM-DD-YYYY or MM.DD.YYYY
     match = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
     if (match) {
         d = new Date(parseInt(match[3]), parseInt(match[1]) - 1, parseInt(match[2]));
         if (!isNaN(d.getTime())) return d;
     }
 
-    // YYYY-MM-DD
     match = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
     if (match) {
         d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
         if (!isNaN(d.getTime())) return d;
     }
 
-    // Month Year: "June 2026" -> defaults to 1st
     match = str.match(/^([a-z]+)\s+(\d{4})$/i);
     if (match) {
         m = months[match[1].toLowerCase()];
@@ -94,7 +85,6 @@ function parseFlexibleDate(input) {
         }
     }
 
-    // MM/DD/YY (2 digit year)
     match = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$/);
     if (match) {
         y = parseInt(match[3]);
@@ -103,7 +93,6 @@ function parseFlexibleDate(input) {
         if (!isNaN(d.getTime())) return d;
     }
 
-    // Fallback
     var fallback = new Date(str);
     if (!isNaN(fallback.getTime()) && fallback.getFullYear() > 1900) return fallback;
 
@@ -183,7 +172,7 @@ function showSection(name) {
 
     closeMobileSidebar();
 
-    if (name === 'schedule') renderSchedule();
+    if (name === 'schedule')  renderSchedule();
     if (name === 'dashboard') renderDashboard();
 }
 
@@ -197,7 +186,7 @@ function closeMobileSidebar() {
 // ============================================
 async function checkSession() {
     try {
-        var result = await db.auth.getSession();
+        var result  = await db.auth.getSession();
         var session = result.data.session;
         if (session && session.user) {
             currentUser = session.user;
@@ -220,31 +209,22 @@ async function handleLogin(e) {
     var email = qs('#login-email').value.trim();
     var pass  = qs('#login-password').value;
 
-    if (!email || !pass) {
-        showLoginError('Please fill in all fields');
-        return;
-    }
+    if (!email || !pass) { showLoginError('Please fill in all fields'); return; }
 
-    var btn     = qs('#login-btn');
-    var btnText = btn.querySelector('.btn-login-text');
-    var btnLoad = btn.querySelector('.btn-login-loader');
+    var btn      = qs('#login-btn');
+    var btnText  = btn.querySelector('.btn-login-text');
+    var btnLoad  = btn.querySelector('.btn-login-loader');
     var btnArrow = btn.querySelector('.fa-arrow-right');
 
     btn.disabled = true;
-    if (btnText) btnText.style.display = 'none';
-    if (btnLoad) btnLoad.style.display = 'inline';
+    if (btnText)  btnText.style.display  = 'none';
+    if (btnLoad)  btnLoad.style.display  = 'inline';
     if (btnArrow) btnArrow.style.display = 'none';
     qs('#login-error').textContent = '';
 
     try {
-        var result = await db.auth.signInWithPassword({
-            email: email,
-            password: pass
-        });
-
-        if (result.error) {
-            throw result.error;
-        }
+        var result = await db.auth.signInWithPassword({ email: email, password: pass });
+        if (result.error) throw result.error;
 
         currentUser = result.data.user;
         qs('#login-form').reset();
@@ -256,21 +236,16 @@ async function handleLogin(e) {
         console.error('Login failed:', err);
         var msg = 'Login failed. Please try again.';
         if (err && err.message) {
-            if (err.message.indexOf('Invalid login') !== -1) {
-                msg = 'Incorrect email or password.';
-            } else if (err.message.indexOf('Too many') !== -1) {
-                msg = 'Too many attempts. Please wait.';
-            } else if (err.message.indexOf('Email not confirmed') !== -1) {
-                msg = 'Email not confirmed.';
-            } else {
-                msg = err.message;
-            }
+            if      (err.message.indexOf('Invalid login')       !== -1) msg = 'Incorrect email or password.';
+            else if (err.message.indexOf('Too many')            !== -1) msg = 'Too many attempts. Please wait.';
+            else if (err.message.indexOf('Email not confirmed') !== -1) msg = 'Email not confirmed.';
+            else msg = err.message;
         }
         showLoginError(msg);
     } finally {
         btn.disabled = false;
-        if (btnText) btnText.style.display = 'inline';
-        if (btnLoad) btnLoad.style.display = 'none';
+        if (btnText)  btnText.style.display  = 'inline';
+        if (btnLoad)  btnLoad.style.display  = 'none';
         if (btnArrow) btnArrow.style.display = 'inline';
     }
 }
@@ -279,11 +254,7 @@ async function handleLogin(e) {
 // AUTH: LOGOUT
 // ============================================
 async function handleLogout() {
-    try {
-        await db.auth.signOut();
-    } catch (err) {
-        console.error('Logout error:', err);
-    }
+    try { await db.auth.signOut(); } catch (err) { console.error('Logout error:', err); }
     currentUser = null;
     events = [];
     showLogin();
@@ -316,15 +287,16 @@ async function loadEvents() {
 // ============================================
 // ADD EVENT
 // ============================================
-async function addEvent(name, isoDate, cost) {
+async function addEvent(name, isoDate, cost, description) {
     try {
         var result = await db.from('events')
             .insert([{
-                user_id:    currentUser.id,
-                event_name: name,
-                event_date: isoDate,
-                event_cost: parseFloat(cost),
-                status:     'pending'
+                user_id:           currentUser.id,
+                event_name:        name,
+                event_date:        isoDate,
+                event_cost:        parseFloat(cost),
+                status:            'pending',
+                event_description: description && description.trim() !== '' ? description.trim() : null
             }])
             .select();
 
@@ -438,13 +410,11 @@ function renderDashboard() {
     }
 
     var totalSpent = 0;
-    for (i = 0; i < attended.length; i++) totalSpent += parseFloat(attended[i].event_cost);
-
+    for (i = 0; i < attended.length; i++)  totalSpent    += parseFloat(attended[i].event_cost);
     var totalSaved = 0;
-    for (i = 0; i < cancelled.length; i++) totalSaved += parseFloat(cancelled[i].event_cost);
-
+    for (i = 0; i < cancelled.length; i++) totalSaved    += parseFloat(cancelled[i].event_cost);
     var totalPotential = 0;
-    for (i = 0; i < events.length; i++) totalPotential += parseFloat(events[i].event_cost);
+    for (i = 0; i < events.length; i++)    totalPotential += parseFloat(events[i].event_cost);
 
     qs('#dash-total').textContent     = '$' + totalSpent.toFixed(2);
     qs('#dash-events').textContent    = events.length;
@@ -455,9 +425,8 @@ function renderDashboard() {
 
     // Upcoming events
     var upcomingEl = qs('#upcoming-list');
-    var today = new Date();
-    var todayISO = formatDateToISO(today);
-    var upcoming = [];
+    var todayISO   = formatDateToISO(new Date());
+    var upcoming   = [];
     for (i = 0; i < events.length; i++) {
         if (events[i].event_date >= todayISO && events[i].status === 'pending') {
             upcoming.push(events[i]);
@@ -470,8 +439,8 @@ function renderDashboard() {
     } else {
         var html = '';
         for (i = 0; i < upcoming.length; i++) {
-            var ev = upcoming[i];
-            var dd = new Date(ev.event_date + 'T00:00:00');
+            var ev       = upcoming[i];
+            var dd       = new Date(ev.event_date + 'T00:00:00');
             var monthStr = dd.toLocaleDateString('en-US', { month: 'short' });
             var dayStr   = dd.getDate();
             html += '<div class="panel-event-row">';
@@ -484,16 +453,16 @@ function renderDashboard() {
     }
 
     // Summary panel
-    var summaryEl = qs('#summary-panel');
-    var avgCost = attended.length > 0 ? totalSpent / attended.length : 0;
-    var attendRate = events.length > 0 ? Math.round(attended.length / events.length * 100) : 0;
+    var summaryEl  = qs('#summary-panel');
+    var avgCost    = attended.length > 0 ? totalSpent / attended.length : 0;
+    var attendRate = events.length   > 0 ? Math.round(attended.length / events.length * 100) : 0;
 
-    summaryEl.innerHTML = ''
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-coins" style="color:var(--green)"></i> Total Spent</span><span class="s-value" style="color:var(--green)">$' + totalSpent.toFixed(2) + '</span></div>'
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-piggy-bank" style="color:var(--purple)"></i> Cancelled Event Total</span><span class="s-value" style="color:var(--purple)">$' + totalSaved.toFixed(2) + '</span></div>'
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-chart-line" style="color:var(--cyan)"></i> Avg per Event</span><span class="s-value" style="color:var(--cyan)">$' + avgCost.toFixed(2) + '</span></div>'
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-wallet" style="color:var(--amber)"></i> Total Potential</span><span class="s-value" style="color:var(--amber)">$' + totalPotential.toFixed(2) + '</span></div>'
-        + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-percent" style="color:var(--blue)"></i> Attendance Rate</span><span class="s-value" style="color:var(--blue)">' + attendRate + '%</span></div>';
+    summaryEl.innerHTML =
+        '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-coins" style="color:var(--green)"></i> Total Spent</span><span class="s-value" style="color:var(--green)">$' + totalSpent.toFixed(2) + '</span></div>'
+      + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-piggy-bank" style="color:var(--purple)"></i> Cancelled Event Total</span><span class="s-value" style="color:var(--purple)">$' + totalSaved.toFixed(2) + '</span></div>'
+      + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-chart-line" style="color:var(--cyan)"></i> Avg per Event</span><span class="s-value" style="color:var(--cyan)">$' + avgCost.toFixed(2) + '</span></div>'
+      + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-wallet" style="color:var(--amber)"></i> Total Potential</span><span class="s-value" style="color:var(--amber)">$' + totalPotential.toFixed(2) + '</span></div>'
+      + '<div class="summary-row"><span class="s-label"><i class="fa-solid fa-percent" style="color:var(--blue)"></i> Attendance Rate</span><span class="s-value" style="color:var(--blue)">' + attendRate + '%</span></div>';
 }
 
 // ============================================
@@ -520,12 +489,12 @@ function renderSchedule() {
     emptyEl.style.display   = 'none';
 
     // Group by month
-    var groups = {};
+    var groups     = {};
     var groupOrder = [];
     for (i = 0; i < filtered.length; i++) {
-        var ev = filtered[i];
-        var dd = new Date(ev.event_date + 'T00:00:00');
-        var key = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0');
+        var ev    = filtered[i];
+        var dd    = new Date(ev.event_date + 'T00:00:00');
+        var key   = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0');
         var label = dd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (!groups[key]) {
             groups[key] = { label: label, events: [] };
@@ -551,6 +520,9 @@ function renderSchedule() {
     container.innerHTML = html;
 }
 
+// ============================================
+// RENDER EVENT ROW
+// ============================================
 function renderEventRow(ev) {
     var dd   = new Date(ev.event_date + 'T00:00:00');
     var wk   = dd.toLocaleDateString('en-US', { weekday: 'short' });
@@ -576,16 +548,29 @@ function renderEventRow(ev) {
     } else {
         actions += '<button class="btn btn-warning btn-sm" onclick="markPending(\'' + ev.id + '\')"><i class="fa-solid fa-rotate-left"></i> Undo</button>';
     }
-
     actions += '<button class="btn btn-ghost btn-icon" onclick="startEdit(\'' + ev.id + '\')" title="Edit"><i class="fa-solid fa-pen"></i></button>';
     actions += '<button class="btn btn-ghost btn-icon" onclick="confirmDelete(\'' + ev.id + '\')" title="Delete" style="color:var(--red)"><i class="fa-solid fa-trash-can"></i></button>';
 
+    // Description — only render if value exists and is not empty
+    var descHtml = '';
+    if (ev.event_description && ev.event_description.trim() !== '') {
+        descHtml = '<div class="ev-description">' + escapeHtml(ev.event_description) + '</div>';
+    }
+
     var html = '';
     html += '<div class="schedule-event ' + statusClass + '">';
-    html += '<div class="ev-date-cell"><div class="ev-weekday">' + wk + '</div><div class="ev-day">' + day + '</div><div class="ev-month-sm">' + mon + '</div></div>';
-    html += '<div class="ev-info"><div class="ev-name">' + escapeHtml(ev.event_name) + '</div><div class="ev-details">' + badgeHtml + '<span class="ev-cost-display"><i class="fa-solid fa-ticket"></i> $' + cost + '</span></div></div>';
-    html += '<div class="ev-cost-cell"><div class="ev-cost-amount">$' + cost + '</div></div>';
-    html += '<div class="ev-actions">' + actions + '</div>';
+    html += '  <div class="ev-date-cell">';
+    html += '    <div class="ev-weekday">' + wk  + '</div>';
+    html += '    <div class="ev-day">'     + day + '</div>';
+    html += '    <div class="ev-month-sm">'+ mon + '</div>';
+    html += '  </div>';
+    html += '  <div class="ev-info">';
+    html += '    <div class="ev-name">' + escapeHtml(ev.event_name) + '</div>';
+    html += descHtml;
+    html += '    <div class="ev-details">' + badgeHtml + '<span class="ev-cost-display"><i class="fa-solid fa-ticket"></i> $' + cost + '</span></div>';
+    html += '  </div>';
+    html += '  <div class="ev-cost-cell"><div class="ev-cost-amount">$' + cost + '</div></div>';
+    html += '  <div class="ev-actions">' + actions + '</div>';
     html += '</div>';
 
     return html;
@@ -597,10 +582,11 @@ function renderEventRow(ev) {
 async function handleFormSubmit(e) {
     e.preventDefault();
 
-    var name    = qs('#event-name').value.trim();
-    var dateStr = qs('#event-date-input').value.trim();
-    var costVal = qs('#event-cost').value;
-    var editId  = qs('#edit-event-id').value;
+    var name        = qs('#event-name').value.trim();
+    var dateStr     = qs('#event-date-input').value.trim();
+    var costVal     = qs('#event-cost').value;
+    var description = qs('#event-description').value.trim();
+    var editId      = qs('#edit-event-id').value;
 
     if (!name || !dateStr || costVal === '') {
         toast('Please fill in all fields', 'error');
@@ -623,19 +609,19 @@ async function handleFormSubmit(e) {
     if (editId) {
         try {
             await updateEvent(editId, {
-                event_name: name,
-                event_date: isoDate,
-                event_cost: parseFloat(costVal)
+                event_name:        name,
+                event_date:        isoDate,
+                event_cost:        parseFloat(costVal),
+                event_description: description !== '' ? description : null
             });
             toast('"' + name + '" updated!', 'success');
             cancelEdit();
-        } catch (err) {
-            // already handled in updateEvent
-        }
+        } catch (err) { /* already handled */ }
     } else {
-        await addEvent(name, isoDate, costVal);
+        await addEvent(name, isoDate, costVal, description);
         qs('#event-form').reset();
-        qs('#date-preview').textContent = '';
+        qs('#date-preview').textContent          = '';
+        qs('#description-char-count').textContent = '0 / 300';
     }
 }
 
@@ -648,16 +634,20 @@ function startEdit(id) {
 
     showSection('add');
 
-    qs('#edit-event-id').value    = ev.id;
-    qs('#event-name').value       = ev.event_name;
-    qs('#event-date-input').value = formatDateDisplay(ev.event_date);
-    qs('#event-cost').value       = parseFloat(ev.event_cost).toFixed(2);
+    qs('#edit-event-id').value     = ev.id;
+    qs('#event-name').value        = ev.event_name;
+    qs('#event-date-input').value  = formatDateDisplay(ev.event_date);
+    qs('#event-cost').value        = parseFloat(ev.event_cost).toFixed(2);
+    qs('#event-description').value = ev.event_description || '';
 
-    qs('#form-section-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Event';
-    qs('#form-section-sub').textContent = 'Modify the event details below';
-    qs('#form-submit-text').textContent = 'Save Changes';
-    qs('#form-submit-icon').className   = 'fa-solid fa-check';
-    qs('#form-cancel-btn').style.display = 'inline-flex';
+    var descLen = (ev.event_description || '').length;
+    qs('#description-char-count').textContent = descLen + ' / 300';
+
+    qs('#form-section-title').innerHTML      = '<i class="fa-solid fa-pen-to-square"></i> Edit Event';
+    qs('#form-section-sub').textContent      = 'Modify the event details below';
+    qs('#form-submit-text').textContent      = 'Save Changes';
+    qs('#form-submit-icon').className        = 'fa-solid fa-check';
+    qs('#form-cancel-btn').style.display     = 'inline-flex';
     qs('.form-panel').classList.add('editing');
 
     var preview = qs('#date-preview');
@@ -666,15 +656,16 @@ function startEdit(id) {
 }
 
 function cancelEdit() {
-    qs('#edit-event-id').value = '';
+    qs('#edit-event-id').value                = '';
     qs('#event-form').reset();
-    qs('#form-section-title').innerHTML = '<i class="fa-solid fa-circle-plus"></i> Add Event';
-    qs('#form-section-sub').textContent = 'Enter event details below';
-    qs('#form-submit-text').textContent = 'Add Event';
-    qs('#form-submit-icon').className   = 'fa-solid fa-plus';
-    qs('#form-cancel-btn').style.display = 'none';
+    qs('#form-section-title').innerHTML       = '<i class="fa-solid fa-circle-plus"></i> Add Event';
+    qs('#form-section-sub').textContent       = 'Enter event details below';
+    qs('#form-submit-text').textContent       = 'Add Event';
+    qs('#form-submit-icon').className         = 'fa-solid fa-plus';
+    qs('#form-cancel-btn').style.display      = 'none';
     qs('.form-panel').classList.remove('editing');
-    qs('#date-preview').textContent = '';
+    qs('#date-preview').textContent           = '';
+    qs('#description-char-count').textContent = '0 / 300';
 }
 
 // ============================================
@@ -695,10 +686,8 @@ function confirmDelete(id) {
 // ALL EVENT LISTENERS
 // ============================================
 function setupListeners() {
-    // Login form
     qs('#login-form').addEventListener('submit', handleLogin);
 
-    // Password toggle
     qs('#toggle-password').addEventListener('click', function() {
         var inp = qs('#login-password');
         if (inp.type === 'password') {
@@ -710,10 +699,8 @@ function setupListeners() {
         }
     });
 
-    // Logout
     qs('#logout-btn').addEventListener('click', handleLogout);
 
-    // Sidebar nav
     qsa('.nav-item').forEach(function(n) {
         n.addEventListener('click', function(e) {
             e.preventDefault();
@@ -721,7 +708,6 @@ function setupListeners() {
         });
     });
 
-    // Mobile menu
     qs('#mobile-menu-btn').addEventListener('click', function() {
         qs('#sidebar').classList.add('open');
         qs('#sidebar-overlay').classList.add('active');
@@ -733,13 +719,12 @@ function setupListeners() {
         showSection('add');
     });
 
-    // Event form
     qs('#event-form').addEventListener('submit', handleFormSubmit);
 
     // Live date preview
     qs('#event-date-input').addEventListener('input', function() {
         var preview = qs('#date-preview');
-        var val = this.value.trim();
+        var val     = this.value.trim();
         if (!val) {
             preview.textContent = '';
             preview.classList.remove('error');
@@ -755,6 +740,11 @@ function setupListeners() {
         }
     });
 
+    // Description character counter
+    qs('#event-description').addEventListener('input', function() {
+        qs('#description-char-count').textContent = this.value.length + ' / 300';
+    });
+
     // Filter chips
     qsa('.filter-chip').forEach(function(chip) {
         chip.addEventListener('click', function() {
@@ -765,7 +755,6 @@ function setupListeners() {
         });
     });
 
-    // Modal confirm
     qs('#modal-confirm-btn').addEventListener('click', function() {
         if (pendingDeleteId) {
             deleteEvent(pendingDeleteId);
@@ -774,13 +763,11 @@ function setupListeners() {
         qs('#confirm-modal').classList.remove('active');
     });
 
-    // Modal cancel
     qs('#modal-cancel-btn').addEventListener('click', function() {
         pendingDeleteId = null;
         qs('#confirm-modal').classList.remove('active');
     });
 
-    // Modal overlay click
     qs('#confirm-modal').addEventListener('click', function(e) {
         if (e.target === qs('#confirm-modal')) {
             pendingDeleteId = null;
@@ -788,26 +775,22 @@ function setupListeners() {
         }
     });
 
-    // Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             if (qs('#confirm-modal').classList.contains('active')) {
                 pendingDeleteId = null;
                 qs('#confirm-modal').classList.remove('active');
             }
-            if (qs('#edit-event-id').value) {
-                cancelEdit();
-            }
+            if (qs('#edit-event-id').value) cancelEdit();
             closeMobileSidebar();
         }
     });
 
-    // Auth state listener
     db.auth.onAuthStateChange(function(eventType, session) {
         console.log('Auth event:', eventType);
         if (eventType === 'SIGNED_OUT') {
             currentUser = null;
-            events = [];
+            events      = [];
             showLogin();
         }
     });
