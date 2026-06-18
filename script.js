@@ -11,10 +11,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let currentUser     = null;
 let events          = [];
 let currentFilter   = 'all';
-
-// Confirm modal state
-let confirmAction   = null; // function to call on confirm
-let confirmEventId  = null;
+let confirmAction   = null;
 
 // ============================================
 // HELPERS
@@ -120,16 +117,6 @@ function formatDateDisplay(isoStr) {
     var d = new Date(isoStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-    });
-}
-
-function formatCreatedAt(timestamp) {
-    if (!timestamp) return '—';
-    var d = new Date(timestamp);
-    return d.toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
-    }) + ' at ' + d.toLocaleTimeString('en-US', {
-        hour: 'numeric', minute: '2-digit'
     });
 }
 
@@ -386,23 +373,20 @@ async function deleteEvent(id) {
 }
 
 // ============================================
-// CONFIRM MODAL — generic
+// CONFIRM MODAL
 // ============================================
 function showConfirm(options) {
-    // options: { icon, iconBg, iconColor, title, message, confirmText, confirmClass, onConfirm }
     var modalIcon = qs('#modal-icon');
-    modalIcon.innerHTML = '<i class="' + (options.icon || 'fa-solid fa-question') + '"></i>';
-    modalIcon.style.background = options.iconBg || 'var(--red-glow)';
-    modalIcon.style.color      = options.iconColor || 'var(--red)';
+    modalIcon.innerHTML      = '<i class="' + (options.icon || 'fa-solid fa-question') + '"></i>';
+    modalIcon.style.background = options.iconBg    || 'var(--red-glow)';
+    modalIcon.style.color      = options.iconColor  || 'var(--red)';
 
-    qs('#modal-title').textContent   = options.title   || 'Confirm';
-    qs('#modal-message').textContent = options.message  || 'Are you sure?';
+    qs('#modal-title').textContent   = options.title       || 'Confirm';
+    qs('#modal-message').textContent = options.message      || 'Are you sure?';
 
-    var confirmBtn = qs('#modal-confirm-btn');
+    var confirmBtn       = qs('#modal-confirm-btn');
     confirmBtn.textContent = options.confirmText || 'Confirm';
-
-    // Remove all btn color classes and add the right one
-    confirmBtn.className = 'btn ' + (options.confirmClass || 'btn-danger');
+    confirmBtn.className   = 'btn ' + (options.confirmClass || 'btn-danger');
 
     confirmAction = options.onConfirm || null;
     qs('#confirm-modal').classList.add('active');
@@ -410,12 +394,11 @@ function showConfirm(options) {
 
 function closeConfirm() {
     qs('#confirm-modal').classList.remove('active');
-    confirmAction  = null;
-    confirmEventId = null;
+    confirmAction = null;
 }
 
 // ============================================
-// SPECIFIC CONFIRM ACTIONS
+// CONFIRM ACTIONS
 // ============================================
 function confirmDelete(id) {
     var ev = findEvent(id);
@@ -503,7 +486,6 @@ function confirmUndo(id) {
 function openDetailModal(id) {
     var ev = findEvent(id);
     if (!ev) return;
-
     populateDetailModal(ev);
     qs('#event-detail-modal').classList.add('active');
 }
@@ -515,7 +497,6 @@ function closeDetailModal() {
 function refreshDetailModal(id) {
     var modal = qs('#event-detail-modal');
     if (!modal.classList.contains('active')) return;
-
     var ev = findEvent(id);
     if (!ev) {
         closeDetailModal();
@@ -526,7 +507,7 @@ function refreshDetailModal(id) {
 
 function populateDetailModal(ev) {
     // Status badge
-    var badgeEl = qs('#detail-badge');
+    var badgeEl    = qs('#detail-badge');
     var badgeClass = '';
     var badgeLabel = '';
     var badgeIcon  = '';
@@ -556,59 +537,30 @@ function populateDetailModal(ev) {
     // Description
     var descEl = qs('#detail-description');
     if (ev.event_description && ev.event_description.trim() !== '') {
-        descEl.textContent  = ev.event_description;
+        descEl.textContent   = ev.event_description;
         descEl.style.display = 'block';
     } else {
         descEl.textContent   = '';
         descEl.style.display = 'none';
     }
 
-    // Info rows
-    qs('#detail-date').textContent    = formatDateDisplay(ev.event_date);
-    qs('#detail-cost').textContent    = '$' + parseFloat(ev.event_cost).toFixed(2);
-    qs('#detail-created').textContent = formatCreatedAt(ev.created_at);
+    // Date
+    qs('#detail-date').textContent = formatDateDisplay(ev.event_date);
 
-    // Status row value with color
-    var statusEl = qs('#detail-status');
-    var statusText  = ev.status.charAt(0).toUpperCase() + ev.status.slice(1);
-    statusEl.textContent = statusText;
-
-    if      (ev.status === 'attended')  statusEl.style.color = 'var(--green)';
-    else if (ev.status === 'cancelled') statusEl.style.color = 'var(--red)';
-    else                                statusEl.style.color = 'var(--amber)';
-
-    // Cost color
+    // Cost
     var costEl = qs('#detail-cost');
+    costEl.textContent = '$' + parseFloat(ev.event_cost).toFixed(2);
     if      (ev.status === 'attended')  costEl.style.color = 'var(--green)';
     else if (ev.status === 'cancelled') costEl.style.color = 'var(--red)';
     else                                costEl.style.color = 'var(--amber)';
 
-    // Action buttons
-    var actionsEl = qs('#detail-actions');
-    var actions   = '';
-
-    if (ev.status === 'pending') {
-        actions += '<button class="btn btn-success" onclick="confirmAttended(\'' + ev.id + '\')">';
-        actions += '<i class="fa-solid fa-circle-check"></i> Attended</button>';
-        actions += '<button class="btn btn-danger" onclick="confirmCancelled(\'' + ev.id + '\')">';
-        actions += '<i class="fa-solid fa-cloud-rain"></i> Rain-Out</button>';
-    } else {
-        actions += '<button class="btn btn-warning" onclick="confirmUndo(\'' + ev.id + '\')">';
-        actions += '<i class="fa-solid fa-rotate-left"></i> Undo</button>';
-    }
-
-    actions += '<button class="btn btn-ghost" onclick="editFromDetail(\'' + ev.id + '\')">';
-    actions += '<i class="fa-solid fa-pen"></i> Edit</button>';
-
-    actions += '<button class="btn btn-ghost" onclick="confirmDelete(\'' + ev.id + '\')" style="color:var(--red);border-color:rgba(239,68,68,0.3)">';
-    actions += '<i class="fa-solid fa-trash-can"></i> Delete</button>';
-
-    actionsEl.innerHTML = actions;
-}
-
-function editFromDetail(id) {
-    closeDetailModal();
-    startEdit(id);
+    // Status
+    var statusEl   = qs('#detail-status');
+    var statusText = ev.status.charAt(0).toUpperCase() + ev.status.slice(1);
+    statusEl.textContent = statusText;
+    if      (ev.status === 'attended')  statusEl.style.color = 'var(--green)';
+    else if (ev.status === 'cancelled') statusEl.style.color = 'var(--red)';
+    else                                statusEl.style.color = 'var(--amber)';
 }
 
 // ============================================
@@ -756,7 +708,6 @@ function renderEventRow(ev) {
         badgeHtml = '<span class="ev-badge badge-cancelled"><i class="fa-solid fa-ban"></i> Cancelled</span>';
     }
 
-    // Actions — all go through confirmation now
     var actions = '';
     if (ev.status === 'pending') {
         actions += '<button class="btn btn-success btn-sm" onclick="event.stopPropagation();confirmAttended(\'' + ev.id + '\')"><i class="fa-solid fa-circle-check"></i> Attended</button>';
@@ -767,7 +718,6 @@ function renderEventRow(ev) {
     actions += '<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();startEdit(\'' + ev.id + '\')" title="Edit"><i class="fa-solid fa-pen"></i></button>';
     actions += '<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();confirmDelete(\'' + ev.id + '\')" title="Delete" style="color:var(--red)"><i class="fa-solid fa-trash-can"></i></button>';
 
-    // Description
     var descHtml = '';
     if (ev.event_description && ev.event_description.trim() !== '') {
         descHtml = '<div class="ev-description">' + escapeHtml(ev.event_description) + '</div>';
@@ -954,7 +904,7 @@ function setupListeners() {
         });
     });
 
-    // Confirm modal — confirm button
+    // Confirm modal — confirm
     qs('#modal-confirm-btn').addEventListener('click', function() {
         if (typeof confirmAction === 'function') {
             confirmAction();
@@ -962,7 +912,7 @@ function setupListeners() {
         closeConfirm();
     });
 
-    // Confirm modal — cancel button
+    // Confirm modal — cancel
     qs('#modal-cancel-btn').addEventListener('click', closeConfirm);
 
     // Confirm modal — overlay click
@@ -978,7 +928,7 @@ function setupListeners() {
         if (e.target === this) closeDetailModal();
     });
 
-    // Escape key — close any open modal or edit state
+    // Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             if (qs('#confirm-modal').classList.contains('active')) {

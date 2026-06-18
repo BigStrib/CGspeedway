@@ -819,7 +819,7 @@ input, textarea { font-family: var(--font-main); }
 .ev-cancelled .ev-cost-amount { color: var(--red); text-decoration: line-through; }
 .ev-pending .ev-cost-amount   { color: var(--amber); }
 
-/* Actions cell — stop click bubbling to event row */
+/* Actions cell ? stop click bubbling to event row */
 .ev-actions {
     display: flex; gap: 6px; flex-wrap: wrap;
     justify-content: flex-end;
@@ -944,7 +944,7 @@ input, textarea { font-family: var(--font-main); }
 .form-footer { display: flex; gap: 12px; }
 
 /* ============================================
-   MODAL — shared base
+   MODAL ? shared base
    ============================================ */
 .modal-overlay {
     position: fixed; inset: 0;
@@ -1002,7 +1002,7 @@ input, textarea { font-family: var(--font-main); }
     position: relative;
 }
 
-/* Coloured top bar — set via JS with inline style */
+/* Coloured top bar ? set via JS with inline style */
 .detail-header {
     padding: 28px 28px 20px;
     border-bottom: 1px solid var(--border);
@@ -1098,17 +1098,8 @@ input, textarea { font-family: var(--font-main); }
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Actions at bottom of detail modal */
-.detail-actions {
-    padding: 20px 28px;
-    display: flex; gap: 8px; flex-wrap: wrap;
-}
 
-.detail-actions .btn {
-    flex: 1;
-    justify-content: center;
-    min-width: 120px;
-}
+
 
 /* ============================================
    TOAST
@@ -1204,8 +1195,7 @@ input, textarea { font-family: var(--font-main); }
     .modal-card        { margin: 0; }
     .modal-card-detail { max-width: 100%; }
 
-    .detail-actions { flex-direction: column; }
-    .detail-actions .btn { min-width: unset; }
+ 
 }
 
 @media (max-width: 480px) {
