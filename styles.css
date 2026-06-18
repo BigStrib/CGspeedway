@@ -135,7 +135,7 @@ input, textarea { font-family: var(--font-main); }
 
 @keyframes gradientSlide {
     0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    50%       { background-position: 100% 50%; }
 }
 
 .login-brand {
@@ -189,9 +189,7 @@ input, textarea { font-family: var(--font-main); }
 }
 
 .input-group input:focus ~ .input-icon,
-.input-group:focus-within .input-icon {
-    color: var(--blue);
-}
+.input-group:focus-within .input-icon { color: var(--blue); }
 
 .input-action {
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -417,7 +415,7 @@ input, textarea { font-family: var(--font-main); }
     white-space: nowrap;
 }
 
-.btn:hover { transform: translateY(-1px); }
+.btn:hover  { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 
 .btn-primary {
@@ -441,8 +439,8 @@ input, textarea { font-family: var(--font-main); }
 }
 .btn-ghost:hover { background: var(--bg-card); color: var(--text-primary); }
 
-.btn-sm { padding: 7px 14px; font-size: 12px; }
-.btn-lg { padding: 14px 28px; font-size: 14px; }
+.btn-sm  { padding: 7px 14px; font-size: 12px; }
+.btn-lg  { padding: 14px 28px; font-size: 14px; }
 
 .btn-icon {
     width: 34px; height: 34px; padding: 0;
@@ -482,12 +480,12 @@ input, textarea { font-family: var(--font-main); }
     box-shadow: var(--shadow-md);
 }
 
-.stat-total-cost::after { background: linear-gradient(90deg, var(--blue), var(--purple)); }
-.stat-events::after     { background: var(--cyan); }
-.stat-attended::after   { background: var(--green); }
-.stat-cancelled::after  { background: var(--red); }
-.stat-pending-card::after { background: var(--amber); }
-.stat-saved::after      { background: var(--purple); }
+.stat-total-cost::after  { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+.stat-events::after      { background: var(--cyan); }
+.stat-attended::after    { background: var(--green); }
+.stat-cancelled::after   { background: var(--red); }
+.stat-pending-card::after{ background: var(--amber); }
+.stat-saved::after       { background: var(--purple); }
 
 .stat-icon {
     width: 48px; height: 48px;
@@ -496,12 +494,12 @@ input, textarea { font-family: var(--font-main); }
     font-size: 20px; flex-shrink: 0;
 }
 
-.stat-total-cost .stat-icon  { background: var(--blue-glow);              color: var(--blue); }
-.stat-events .stat-icon      { background: rgba(6,182,212,0.12);           color: var(--cyan); }
-.stat-attended .stat-icon    { background: var(--green-glow);              color: var(--green); }
-.stat-cancelled .stat-icon   { background: var(--red-glow);                color: var(--red); }
-.stat-pending-card .stat-icon{ background: var(--amber-glow);              color: var(--amber); }
-.stat-saved .stat-icon       { background: var(--purple-glow);             color: var(--purple); }
+.stat-total-cost .stat-icon  { background: var(--blue-glow);        color: var(--blue); }
+.stat-events .stat-icon      { background: rgba(6,182,212,0.12);     color: var(--cyan); }
+.stat-attended .stat-icon    { background: var(--green-glow);        color: var(--green); }
+.stat-cancelled .stat-icon   { background: var(--red-glow);          color: var(--red); }
+.stat-pending-card .stat-icon{ background: var(--amber-glow);        color: var(--amber); }
+.stat-saved .stat-icon       { background: var(--purple-glow);       color: var(--purple); }
 
 .stat-value {
     display: block;
@@ -675,7 +673,6 @@ input, textarea { font-family: var(--font-main); }
 .schedule-empty h3 { font-size: 20px; color: var(--text-primary); margin-bottom: 8px; }
 .schedule-empty p  { margin-bottom: 20px; }
 
-/* Month group */
 .month-group { }
 
 .month-header {
@@ -710,12 +707,20 @@ input, textarea { font-family: var(--font-main); }
     margin-bottom: 8px;
     transition: all var(--duration) var(--ease);
     position: relative;
+    cursor: pointer;
+    user-select: none;
 }
 
 .schedule-event:hover {
     border-color: var(--border-light);
     background: var(--bg-card-hover);
     box-shadow: var(--shadow-sm);
+}
+
+/* Press/active feedback */
+.schedule-event:active {
+    transform: scale(0.995);
+    box-shadow: none;
 }
 
 .schedule-event.ev-attended  { border-left: 3px solid var(--green); }
@@ -757,7 +762,6 @@ input, textarea { font-family: var(--font-main); }
     margin-bottom: 2px;
 }
 
-/* ── EVENT DESCRIPTION ── */
 .ev-description {
     font-size: 11px;
     color: var(--text-muted);
@@ -789,9 +793,9 @@ input, textarea { font-family: var(--font-main); }
     display: inline-flex; align-items: center; gap: 5px;
 }
 
-.badge-pending   { background: var(--amber-glow); color: var(--amber);  border: 1px solid rgba(245,158,11,0.2); }
-.badge-attended  { background: var(--green-glow);  color: var(--green);  border: 1px solid rgba(16,185,129,0.2); }
-.badge-cancelled { background: var(--red-glow);    color: var(--red);    border: 1px solid rgba(239,68,68,0.2); }
+.badge-pending   { background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.badge-attended  { background: var(--green-glow);  color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+.badge-cancelled { background: var(--red-glow);    color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
 
 .ev-cost-display {
     font-family: var(--font-mono);
@@ -815,10 +819,16 @@ input, textarea { font-family: var(--font-main); }
 .ev-cancelled .ev-cost-amount { color: var(--red); text-decoration: line-through; }
 .ev-pending .ev-cost-amount   { color: var(--amber); }
 
-/* Actions cell */
+/* Actions cell � stop click bubbling to event row */
 .ev-actions {
     display: flex; gap: 6px; flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.ev-actions button {
+    /* prevent row click from firing when clicking buttons */
+    position: relative;
+    z-index: 2;
 }
 
 /* ============================================
@@ -879,7 +889,6 @@ input, textarea { font-family: var(--font-main); }
 
 .form-field input::placeholder { color: var(--text-muted); }
 
-/* ── TEXTAREA (description field) ── */
 .form-field textarea {
     width: 100%;
     padding: 14px 16px;
@@ -904,7 +913,6 @@ input, textarea { font-family: var(--font-main); }
 
 .form-field textarea::placeholder { color: var(--text-muted); }
 
-/* ── OPTIONAL label tag ── */
 .field-optional {
     font-size: 10px;
     color: var(--text-muted);
@@ -936,14 +944,15 @@ input, textarea { font-family: var(--font-main); }
 .form-footer { display: flex; gap: 12px; }
 
 /* ============================================
-   MODAL
+   MODAL � shared base
    ============================================ */
 .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     display: none; align-items: center; justify-content: center;
     z-index: 1000;
     backdrop-filter: blur(6px);
+    padding: 16px;
 }
 
 .modal-overlay.active { display: flex; }
@@ -981,6 +990,125 @@ input, textarea { font-family: var(--font-main); }
 
 .modal-btns { display: flex; gap: 10px; justify-content: center; }
 .modal-btns .btn { flex: 1; justify-content: center; }
+
+/* ============================================
+   EVENT DETAIL MODAL
+   ============================================ */
+.modal-card-detail {
+    max-width: 480px;
+    text-align: left;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Coloured top bar � set via JS with inline style */
+.detail-header {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+
+.detail-header::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--blue); /* overridden by JS */
+}
+
+.detail-header.status-attended::before  { background: var(--green); }
+.detail-header.status-cancelled::before { background: var(--red); }
+.detail-header.status-pending::before   { background: var(--amber); }
+
+.detail-close-btn {
+    position: absolute; top: 14px; right: 14px;
+    width: 32px; height: 32px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    color: var(--text-muted);
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--duration) var(--ease);
+    z-index: 2;
+}
+
+.detail-close-btn:hover {
+    background: var(--red-glow);
+    border-color: rgba(239,68,68,0.3);
+    color: var(--red);
+}
+
+.detail-status-badge {
+    margin-bottom: 10px;
+}
+
+.detail-title {
+    font-size: 20px; font-weight: 800;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    padding-right: 40px; /* space for close btn */
+}
+
+.detail-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Info rows */
+.detail-body {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 28px;
+    transition: background var(--duration);
+}
+
+.detail-row:hover { background: var(--bg-card-hover); }
+
+.detail-row-icon {
+    width: 34px; height: 34px;
+    background: var(--bg-input);
+    border-radius: var(--radius-xs);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--blue);
+    flex-shrink: 0;
+}
+
+.detail-row-content {
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+}
+
+.detail-row-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-muted);
+}
+
+.detail-row-value {
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Actions at bottom of detail modal */
+.detail-actions {
+    padding: 20px 28px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.detail-actions .btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+}
 
 /* ============================================
    TOAST
@@ -1063,8 +1191,6 @@ input, textarea { font-family: var(--font-main); }
     .ev-cost-cell   { grid-column: 2; text-align: left; }
     .ev-cost-amount { font-size: 18px; }
     .ev-actions     { grid-column: 1 / -1; }
-
-    /* Description truncates tighter on mobile */
     .ev-description { max-width: 100%; }
 
     .form-grid  { grid-template-columns: 1fr; }
@@ -1075,7 +1201,11 @@ input, textarea { font-family: var(--font-main); }
     .toast-container { left: 16px; right: 16px; bottom: 16px; }
     .toast-item      { max-width: 100%; }
 
-    .modal-card { margin: 16px; }
+    .modal-card        { margin: 0; }
+    .modal-card-detail { max-width: 100%; }
+
+    .detail-actions { flex-direction: column; }
+    .detail-actions .btn { min-width: unset; }
 }
 
 @media (max-width: 480px) {
@@ -1083,4 +1213,5 @@ input, textarea { font-family: var(--font-main); }
     .filter-chip { flex: 1; justify-content: center; }
     .ev-name     { font-size: 14px; }
     .ev-description { font-size: 10px; }
+    .detail-title { font-size: 17px; }
 }

@@ -11,7 +11,10 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let currentUser     = null;
 let events          = [];
 let currentFilter   = 'all';
-let pendingDeleteId = null;
+
+// Confirm modal state
+let confirmAction   = null; // function to call on confirm
+let confirmEventId  = null;
 
 // ============================================
 // HELPERS
@@ -21,9 +24,16 @@ function qsa(selector) { return document.querySelectorAll(selector); }
 
 function escapeHtml(str) {
     if (!str) return '';
-    const d = document.createElement('div');
+    var d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
+}
+
+function findEvent(id) {
+    for (var i = 0; i < events.length; i++) {
+        if (events[i].id === id) return events[i];
+    }
+    return null;
 }
 
 // ============================================
@@ -31,7 +41,7 @@ function escapeHtml(str) {
 // ============================================
 function parseFlexibleDate(input) {
     if (!input || !input.trim()) return null;
-    let str = input.trim();
+    var str = input.trim();
 
     str = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
     str = str.replace(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thur|thurs|fri|sat|sun)\b[,.]?\s*/gi, '');
@@ -110,6 +120,16 @@ function formatDateDisplay(isoStr) {
     var d = new Date(isoStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+}
+
+function formatCreatedAt(timestamp) {
+    if (!timestamp) return '—';
+    var d = new Date(timestamp);
+    return d.toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+    }) + ' at ' + d.toLocaleTimeString('en-US', {
+        hour: 'numeric', minute: '2-digit'
     });
 }
 
@@ -366,33 +386,229 @@ async function deleteEvent(id) {
 }
 
 // ============================================
-// STATUS ACTIONS
+// CONFIRM MODAL — generic
 // ============================================
-async function markAttended(id) {
-    try {
-        await updateEvent(id, { status: 'attended' });
-        var ev = null;
-        for (var i = 0; i < events.length; i++) { if (events[i].id === id) { ev = events[i]; break; } }
-        toast('"' + (ev ? ev.event_name : 'Event') + '" attended â€” added to total', 'success');
-    } catch (err) { /* already handled */ }
+function showConfirm(options) {
+    // options: { icon, iconBg, iconColor, title, message, confirmText, confirmClass, onConfirm }
+    var modalIcon = qs('#modal-icon');
+    modalIcon.innerHTML = '<i class="' + (options.icon || 'fa-solid fa-question') + '"></i>';
+    modalIcon.style.background = options.iconBg || 'var(--red-glow)';
+    modalIcon.style.color      = options.iconColor || 'var(--red)';
+
+    qs('#modal-title').textContent   = options.title   || 'Confirm';
+    qs('#modal-message').textContent = options.message  || 'Are you sure?';
+
+    var confirmBtn = qs('#modal-confirm-btn');
+    confirmBtn.textContent = options.confirmText || 'Confirm';
+
+    // Remove all btn color classes and add the right one
+    confirmBtn.className = 'btn ' + (options.confirmClass || 'btn-danger');
+
+    confirmAction = options.onConfirm || null;
+    qs('#confirm-modal').classList.add('active');
 }
 
-async function markCancelled(id) {
-    try {
-        await updateEvent(id, { status: 'cancelled' });
-        var ev = null;
-        for (var i = 0; i < events.length; i++) { if (events[i].id === id) { ev = events[i]; break; } }
-        toast('"' + (ev ? ev.event_name : 'Event') + '" cancelled â€” not counted', 'info');
-    } catch (err) { /* already handled */ }
+function closeConfirm() {
+    qs('#confirm-modal').classList.remove('active');
+    confirmAction  = null;
+    confirmEventId = null;
 }
 
-async function markPending(id) {
-    try {
-        await updateEvent(id, { status: 'pending' });
-        var ev = null;
-        for (var i = 0; i < events.length; i++) { if (events[i].id === id) { ev = events[i]; break; } }
-        toast('"' + (ev ? ev.event_name : 'Event') + '" reset to pending', 'info');
-    } catch (err) { /* already handled */ }
+// ============================================
+// SPECIFIC CONFIRM ACTIONS
+// ============================================
+function confirmDelete(id) {
+    var ev = findEvent(id);
+    showConfirm({
+        icon:         'fa-solid fa-trash-can',
+        iconBg:       'var(--red-glow)',
+        iconColor:    'var(--red)',
+        title:        'Delete Event',
+        message:      'Permanently delete "' + (ev ? ev.event_name : 'this event') + '"? This cannot be undone.',
+        confirmText:  'Delete',
+        confirmClass: 'btn-danger',
+        onConfirm: function() {
+            deleteEvent(id);
+            closeDetailModal();
+        }
+    });
+}
+
+function confirmAttended(id) {
+    var ev = findEvent(id);
+    showConfirm({
+        icon:         'fa-solid fa-circle-check',
+        iconBg:       'var(--green-glow)',
+        iconColor:    'var(--green)',
+        title:        'Mark as Attended',
+        message:      'Mark "' + (ev ? ev.event_name : 'this event') + '" as attended? The cost will be added to your total spent.',
+        confirmText:  'Yes, Attended',
+        confirmClass: 'btn-success',
+        onConfirm: async function() {
+            try {
+                await updateEvent(id, { status: 'attended' });
+                var updated = findEvent(id);
+                toast('"' + (updated ? updated.event_name : 'Event') + '" attended — added to total', 'success');
+                refreshDetailModal(id);
+            } catch (err) { /* handled */ }
+        }
+    });
+}
+
+function confirmCancelled(id) {
+    var ev = findEvent(id);
+    showConfirm({
+        icon:         'fa-solid fa-cloud-rain',
+        iconBg:       'var(--red-glow)',
+        iconColor:    'var(--red)',
+        title:        'Rain-Out / Cancel',
+        message:      'Mark "' + (ev ? ev.event_name : 'this event') + '" as cancelled? It will not count toward your total spent.',
+        confirmText:  'Yes, Rain-Out',
+        confirmClass: 'btn-danger',
+        onConfirm: async function() {
+            try {
+                await updateEvent(id, { status: 'cancelled' });
+                var updated = findEvent(id);
+                toast('"' + (updated ? updated.event_name : 'Event') + '" cancelled — not counted', 'info');
+                refreshDetailModal(id);
+            } catch (err) { /* handled */ }
+        }
+    });
+}
+
+function confirmUndo(id) {
+    var ev = findEvent(id);
+    showConfirm({
+        icon:         'fa-solid fa-rotate-left',
+        iconBg:       'var(--amber-glow)',
+        iconColor:    'var(--amber)',
+        title:        'Reset to Pending',
+        message:      'Reset "' + (ev ? ev.event_name : 'this event') + '" back to pending status?',
+        confirmText:  'Yes, Reset',
+        confirmClass: 'btn-warning',
+        onConfirm: async function() {
+            try {
+                await updateEvent(id, { status: 'pending' });
+                var updated = findEvent(id);
+                toast('"' + (updated ? updated.event_name : 'Event') + '" reset to pending', 'info');
+                refreshDetailModal(id);
+            } catch (err) { /* handled */ }
+        }
+    });
+}
+
+// ============================================
+// EVENT DETAIL MODAL
+// ============================================
+function openDetailModal(id) {
+    var ev = findEvent(id);
+    if (!ev) return;
+
+    populateDetailModal(ev);
+    qs('#event-detail-modal').classList.add('active');
+}
+
+function closeDetailModal() {
+    qs('#event-detail-modal').classList.remove('active');
+}
+
+function refreshDetailModal(id) {
+    var modal = qs('#event-detail-modal');
+    if (!modal.classList.contains('active')) return;
+
+    var ev = findEvent(id);
+    if (!ev) {
+        closeDetailModal();
+        return;
+    }
+    populateDetailModal(ev);
+}
+
+function populateDetailModal(ev) {
+    // Status badge
+    var badgeEl = qs('#detail-badge');
+    var badgeClass = '';
+    var badgeLabel = '';
+    var badgeIcon  = '';
+
+    if (ev.status === 'pending') {
+        badgeClass = 'ev-badge badge-pending';
+        badgeLabel = 'Pending';
+        badgeIcon  = 'fa-solid fa-clock';
+    } else if (ev.status === 'attended') {
+        badgeClass = 'ev-badge badge-attended';
+        badgeLabel = 'Attended';
+        badgeIcon  = 'fa-solid fa-circle-check';
+    } else {
+        badgeClass = 'ev-badge badge-cancelled';
+        badgeLabel = 'Cancelled';
+        badgeIcon  = 'fa-solid fa-ban';
+    }
+    badgeEl.innerHTML = '<span class="' + badgeClass + '"><i class="' + badgeIcon + '"></i> ' + badgeLabel + '</span>';
+
+    // Header color bar
+    var header = qs('.detail-header');
+    header.className = 'detail-header status-' + ev.status;
+
+    // Title
+    qs('#detail-title').textContent = ev.event_name;
+
+    // Description
+    var descEl = qs('#detail-description');
+    if (ev.event_description && ev.event_description.trim() !== '') {
+        descEl.textContent  = ev.event_description;
+        descEl.style.display = 'block';
+    } else {
+        descEl.textContent   = '';
+        descEl.style.display = 'none';
+    }
+
+    // Info rows
+    qs('#detail-date').textContent    = formatDateDisplay(ev.event_date);
+    qs('#detail-cost').textContent    = '$' + parseFloat(ev.event_cost).toFixed(2);
+    qs('#detail-created').textContent = formatCreatedAt(ev.created_at);
+
+    // Status row value with color
+    var statusEl = qs('#detail-status');
+    var statusText  = ev.status.charAt(0).toUpperCase() + ev.status.slice(1);
+    statusEl.textContent = statusText;
+
+    if      (ev.status === 'attended')  statusEl.style.color = 'var(--green)';
+    else if (ev.status === 'cancelled') statusEl.style.color = 'var(--red)';
+    else                                statusEl.style.color = 'var(--amber)';
+
+    // Cost color
+    var costEl = qs('#detail-cost');
+    if      (ev.status === 'attended')  costEl.style.color = 'var(--green)';
+    else if (ev.status === 'cancelled') costEl.style.color = 'var(--red)';
+    else                                costEl.style.color = 'var(--amber)';
+
+    // Action buttons
+    var actionsEl = qs('#detail-actions');
+    var actions   = '';
+
+    if (ev.status === 'pending') {
+        actions += '<button class="btn btn-success" onclick="confirmAttended(\'' + ev.id + '\')">';
+        actions += '<i class="fa-solid fa-circle-check"></i> Attended</button>';
+        actions += '<button class="btn btn-danger" onclick="confirmCancelled(\'' + ev.id + '\')">';
+        actions += '<i class="fa-solid fa-cloud-rain"></i> Rain-Out</button>';
+    } else {
+        actions += '<button class="btn btn-warning" onclick="confirmUndo(\'' + ev.id + '\')">';
+        actions += '<i class="fa-solid fa-rotate-left"></i> Undo</button>';
+    }
+
+    actions += '<button class="btn btn-ghost" onclick="editFromDetail(\'' + ev.id + '\')">';
+    actions += '<i class="fa-solid fa-pen"></i> Edit</button>';
+
+    actions += '<button class="btn btn-ghost" onclick="confirmDelete(\'' + ev.id + '\')" style="color:var(--red);border-color:rgba(239,68,68,0.3)">';
+    actions += '<i class="fa-solid fa-trash-can"></i> Delete</button>';
+
+    actionsEl.innerHTML = actions;
+}
+
+function editFromDetail(id) {
+    closeDetailModal();
+    startEdit(id);
 }
 
 // ============================================
@@ -410,9 +626,9 @@ function renderDashboard() {
     }
 
     var totalSpent = 0;
-    for (i = 0; i < attended.length; i++)  totalSpent    += parseFloat(attended[i].event_cost);
+    for (i = 0; i < attended.length; i++)  totalSpent     += parseFloat(attended[i].event_cost);
     var totalSaved = 0;
-    for (i = 0; i < cancelled.length; i++) totalSaved    += parseFloat(cancelled[i].event_cost);
+    for (i = 0; i < cancelled.length; i++) totalSaved     += parseFloat(cancelled[i].event_cost);
     var totalPotential = 0;
     for (i = 0; i < events.length; i++)    totalPotential += parseFloat(events[i].event_cost);
 
@@ -423,7 +639,7 @@ function renderDashboard() {
     qs('#dash-pending').textContent   = pending.length;
     qs('#dash-saved').textContent     = '$' + totalSaved.toFixed(2);
 
-    // Upcoming events
+    // Upcoming
     var upcomingEl = qs('#upcoming-list');
     var todayISO   = formatDateToISO(new Date());
     var upcoming   = [];
@@ -452,7 +668,7 @@ function renderDashboard() {
         upcomingEl.innerHTML = html;
     }
 
-    // Summary panel
+    // Summary
     var summaryEl  = qs('#summary-panel');
     var avgCost    = attended.length > 0 ? totalSpent / attended.length : 0;
     var attendRate = events.length   > 0 ? Math.round(attended.length / events.length * 100) : 0;
@@ -488,7 +704,6 @@ function renderSchedule() {
     container.style.display = 'flex';
     emptyEl.style.display   = 'none';
 
-    // Group by month
     var groups     = {};
     var groupOrder = [];
     for (i = 0; i < filtered.length; i++) {
@@ -541,24 +756,25 @@ function renderEventRow(ev) {
         badgeHtml = '<span class="ev-badge badge-cancelled"><i class="fa-solid fa-ban"></i> Cancelled</span>';
     }
 
+    // Actions — all go through confirmation now
     var actions = '';
     if (ev.status === 'pending') {
-        actions += '<button class="btn btn-success btn-sm" onclick="markAttended(\'' + ev.id + '\')"><i class="fa-solid fa-circle-check"></i> Attended</button>';
-        actions += '<button class="btn btn-danger btn-sm" onclick="markCancelled(\'' + ev.id + '\')"><i class="fa-solid fa-cloud-rain"></i> Rain-Out</button>';
+        actions += '<button class="btn btn-success btn-sm" onclick="event.stopPropagation();confirmAttended(\'' + ev.id + '\')"><i class="fa-solid fa-circle-check"></i> Attended</button>';
+        actions += '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmCancelled(\'' + ev.id + '\')"><i class="fa-solid fa-cloud-rain"></i> Rain-Out</button>';
     } else {
-        actions += '<button class="btn btn-warning btn-sm" onclick="markPending(\'' + ev.id + '\')"><i class="fa-solid fa-rotate-left"></i> Undo</button>';
+        actions += '<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();confirmUndo(\'' + ev.id + '\')"><i class="fa-solid fa-rotate-left"></i> Undo</button>';
     }
-    actions += '<button class="btn btn-ghost btn-icon" onclick="startEdit(\'' + ev.id + '\')" title="Edit"><i class="fa-solid fa-pen"></i></button>';
-    actions += '<button class="btn btn-ghost btn-icon" onclick="confirmDelete(\'' + ev.id + '\')" title="Delete" style="color:var(--red)"><i class="fa-solid fa-trash-can"></i></button>';
+    actions += '<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();startEdit(\'' + ev.id + '\')" title="Edit"><i class="fa-solid fa-pen"></i></button>';
+    actions += '<button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();confirmDelete(\'' + ev.id + '\')" title="Delete" style="color:var(--red)"><i class="fa-solid fa-trash-can"></i></button>';
 
-    // Description â€” only render if value exists and is not empty
+    // Description
     var descHtml = '';
     if (ev.event_description && ev.event_description.trim() !== '') {
         descHtml = '<div class="ev-description">' + escapeHtml(ev.event_description) + '</div>';
     }
 
     var html = '';
-    html += '<div class="schedule-event ' + statusClass + '">';
+    html += '<div class="schedule-event ' + statusClass + '" onclick="openDetailModal(\'' + ev.id + '\')">';
     html += '  <div class="ev-date-cell">';
     html += '    <div class="ev-weekday">' + wk  + '</div>';
     html += '    <div class="ev-day">'     + day + '</div>';
@@ -616,7 +832,7 @@ async function handleFormSubmit(e) {
             });
             toast('"' + name + '" updated!', 'success');
             cancelEdit();
-        } catch (err) { /* already handled */ }
+        } catch (err) { /* handled */ }
     } else {
         await addEvent(name, isoDate, costVal, description);
         qs('#event-form').reset();
@@ -626,10 +842,7 @@ async function handleFormSubmit(e) {
 }
 
 function startEdit(id) {
-    var ev = null;
-    for (var i = 0; i < events.length; i++) {
-        if (events[i].id === id) { ev = events[i]; break; }
-    }
+    var ev = findEvent(id);
     if (!ev) return;
 
     showSection('add');
@@ -643,11 +856,11 @@ function startEdit(id) {
     var descLen = (ev.event_description || '').length;
     qs('#description-char-count').textContent = descLen + ' / 300';
 
-    qs('#form-section-title').innerHTML      = '<i class="fa-solid fa-pen-to-square"></i> Edit Event';
-    qs('#form-section-sub').textContent      = 'Modify the event details below';
-    qs('#form-submit-text').textContent      = 'Save Changes';
-    qs('#form-submit-icon').className        = 'fa-solid fa-check';
-    qs('#form-cancel-btn').style.display     = 'inline-flex';
+    qs('#form-section-title').innerHTML  = '<i class="fa-solid fa-pen-to-square"></i> Edit Event';
+    qs('#form-section-sub').textContent  = 'Modify the event details below';
+    qs('#form-submit-text').textContent  = 'Save Changes';
+    qs('#form-submit-icon').className    = 'fa-solid fa-check';
+    qs('#form-cancel-btn').style.display = 'inline-flex';
     qs('.form-panel').classList.add('editing');
 
     var preview = qs('#date-preview');
@@ -656,7 +869,7 @@ function startEdit(id) {
 }
 
 function cancelEdit() {
-    qs('#edit-event-id').value                = '';
+    qs('#edit-event-id').value = '';
     qs('#event-form').reset();
     qs('#form-section-title').innerHTML       = '<i class="fa-solid fa-circle-plus"></i> Add Event';
     qs('#form-section-sub').textContent       = 'Enter event details below';
@@ -666,20 +879,6 @@ function cancelEdit() {
     qs('.form-panel').classList.remove('editing');
     qs('#date-preview').textContent           = '';
     qs('#description-char-count').textContent = '0 / 300';
-}
-
-// ============================================
-// DELETE CONFIRM
-// ============================================
-function confirmDelete(id) {
-    var ev = null;
-    for (var i = 0; i < events.length; i++) {
-        if (events[i].id === id) { ev = events[i]; break; }
-    }
-    pendingDeleteId = id;
-    qs('#modal-title').textContent   = 'Delete Event';
-    qs('#modal-message').textContent = 'Permanently delete "' + (ev ? ev.event_name : 'this event') + '"? This cannot be undone.';
-    qs('#confirm-modal').classList.add('active');
 }
 
 // ============================================
@@ -740,7 +939,7 @@ function setupListeners() {
         }
     });
 
-    // Description character counter
+    // Description char counter
     qs('#event-description').addEventListener('input', function() {
         qs('#description-char-count').textContent = this.value.length + ' / 300';
     });
@@ -755,37 +954,49 @@ function setupListeners() {
         });
     });
 
+    // Confirm modal — confirm button
     qs('#modal-confirm-btn').addEventListener('click', function() {
-        if (pendingDeleteId) {
-            deleteEvent(pendingDeleteId);
-            pendingDeleteId = null;
+        if (typeof confirmAction === 'function') {
+            confirmAction();
         }
-        qs('#confirm-modal').classList.remove('active');
+        closeConfirm();
     });
 
-    qs('#modal-cancel-btn').addEventListener('click', function() {
-        pendingDeleteId = null;
-        qs('#confirm-modal').classList.remove('active');
-    });
+    // Confirm modal — cancel button
+    qs('#modal-cancel-btn').addEventListener('click', closeConfirm);
 
+    // Confirm modal — overlay click
     qs('#confirm-modal').addEventListener('click', function(e) {
-        if (e.target === qs('#confirm-modal')) {
-            pendingDeleteId = null;
-            qs('#confirm-modal').classList.remove('active');
-        }
+        if (e.target === this) closeConfirm();
     });
 
+    // Detail modal — close button
+    qs('#detail-close-btn').addEventListener('click', closeDetailModal);
+
+    // Detail modal — overlay click
+    qs('#event-detail-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDetailModal();
+    });
+
+    // Escape key — close any open modal or edit state
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             if (qs('#confirm-modal').classList.contains('active')) {
-                pendingDeleteId = null;
-                qs('#confirm-modal').classList.remove('active');
+                closeConfirm();
+                return;
             }
-            if (qs('#edit-event-id').value) cancelEdit();
+            if (qs('#event-detail-modal').classList.contains('active')) {
+                closeDetailModal();
+                return;
+            }
+            if (qs('#edit-event-id').value) {
+                cancelEdit();
+            }
             closeMobileSidebar();
         }
     });
 
+    // Auth state listener
     db.auth.onAuthStateChange(function(eventType, session) {
         console.log('Auth event:', eventType);
         if (eventType === 'SIGNED_OUT') {

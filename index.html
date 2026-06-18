@@ -108,7 +108,7 @@
 
         <!-- Main Content Area -->
         <main class="main">
-            <!-- ── DASHBOARD SECTION ── -->
+            <!-- -- DASHBOARD SECTION -- -->
             <section id="section-dashboard" class="section active">
                 <div class="section-header">
                     <div>
@@ -189,7 +189,7 @@
                 </div>
             </section>
 
-            <!-- ── SCHEDULE SECTION ── -->
+            <!-- -- SCHEDULE SECTION -- -->
             <section id="section-schedule" class="section">
                 <div class="section-header">
                     <div>
@@ -231,7 +231,7 @@
                 </div>
             </section>
 
-            <!-- ── ADD / EDIT EVENT SECTION ── -->
+            <!-- -- ADD / EDIT EVENT SECTION -- -->
             <section id="section-add" class="section">
                 <div class="section-header">
                     <div>
@@ -254,18 +254,12 @@
                                 <input type="text" id="event-name" placeholder="e.g., Saturday Night Showdown" required maxlength="150">
                             </div>
 
-                            <!-- ── EVENT DESCRIPTION (new) ── -->
                             <div class="form-field full-width">
                                 <label for="event-description">
                                     <i class="fa-solid fa-align-left"></i> Event Description
                                     <span class="field-optional">(optional)</span>
                                 </label>
-                                <textarea
-                                    id="event-description"
-                                    placeholder="e.g., Doors open at 6pm, VIP section included, bring ticket..."
-                                    maxlength="300"
-                                    rows="3"
-                                ></textarea>
+                                <textarea id="event-description" placeholder="e.g., Doors open at 6pm, VIP section included, bring ticket..." maxlength="300" rows="3"></textarea>
                                 <span class="field-hint" id="description-char-count">0 / 300</span>
                             </div>
 
@@ -303,25 +297,75 @@
         </main>
     </div>
 
-    <!-- ── CONFIRM MODAL ── -->
+    <!-- -- CONFIRM MODAL (generic � used for delete, attended, rain-out, undo) -- -->
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-icon" id="modal-icon">
                 <i class="fa-solid fa-trash-can"></i>
             </div>
-            <h3 id="modal-title">Delete Event</h3>
-            <p id="modal-message">Are you sure? This cannot be undone.</p>
+            <h3 id="modal-title">Confirm Action</h3>
+            <p id="modal-message">Are you sure?</p>
             <div class="modal-btns">
                 <button id="modal-cancel-btn" class="btn btn-ghost">Cancel</button>
-                <button id="modal-confirm-btn" class="btn btn-danger">Delete</button>
+                <button id="modal-confirm-btn" class="btn btn-danger">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- ── TOAST ── -->
+    <!-- -- EVENT DETAIL MODAL (popup when clicking/pressing an event) -- -->
+    <div id="event-detail-modal" class="modal-overlay">
+        <div class="modal-card modal-card-detail">
+            <button id="detail-close-btn" class="detail-close-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="detail-header">
+                <div class="detail-status-badge" id="detail-badge"></div>
+                <h2 class="detail-title" id="detail-title">Event Name</h2>
+                <p class="detail-description" id="detail-description"></p>
+            </div>
+
+            <div class="detail-body">
+                <div class="detail-row">
+                    <div class="detail-row-icon"><i class="fa-regular fa-calendar"></i></div>
+                    <div class="detail-row-content">
+                        <span class="detail-row-label">Date</span>
+                        <span class="detail-row-value" id="detail-date">�</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-row-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                    <div class="detail-row-content">
+                        <span class="detail-row-label">Cost</span>
+                        <span class="detail-row-value" id="detail-cost">$0.00</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-row-icon"><i class="fa-solid fa-signal"></i></div>
+                    <div class="detail-row-content">
+                        <span class="detail-row-label">Status</span>
+                        <span class="detail-row-value" id="detail-status">Pending</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-row-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="detail-row-content">
+                        <span class="detail-row-label">Created</span>
+                        <span class="detail-row-value" id="detail-created">�</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-actions" id="detail-actions">
+                <!-- JS will populate action buttons based on event status -->
+            </div>
+        </div>
+    </div>
+
+    <!-- -- TOAST -- -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- ── OVERLAY for mobile sidebar ── -->
+    <!-- -- OVERLAY for mobile sidebar -- -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
     <script src="script.js"></script>
