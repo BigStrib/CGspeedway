@@ -431,7 +431,7 @@ function confirmAttended(id) {
             try {
                 await updateEvent(id, { status: 'attended' });
                 var updated = findEvent(id);
-                toast('"' + (updated ? updated.event_name : 'Event') + '" attended — added to total', 'success');
+                toast('"' + (updated ? updated.event_name : 'Event') + '" attended Â— added to total', 'success');
                 refreshDetailModal(id);
             } catch (err) { /* handled */ }
         }
@@ -452,7 +452,7 @@ function confirmCancelled(id) {
             try {
                 await updateEvent(id, { status: 'cancelled' });
                 var updated = findEvent(id);
-                toast('"' + (updated ? updated.event_name : 'Event') + '" cancelled — not counted', 'info');
+                toast('"' + (updated ? updated.event_name : 'Event') + '" cancelled Â— not counted', 'info');
                 refreshDetailModal(id);
             } catch (err) { /* handled */ }
         }
@@ -904,7 +904,7 @@ function setupListeners() {
         });
     });
 
-    // Confirm modal — confirm
+    // Confirm modal Â— confirm
     qs('#modal-confirm-btn').addEventListener('click', function() {
         if (typeof confirmAction === 'function') {
             confirmAction();
@@ -912,18 +912,18 @@ function setupListeners() {
         closeConfirm();
     });
 
-    // Confirm modal — cancel
+    // Confirm modal Â— cancel
     qs('#modal-cancel-btn').addEventListener('click', closeConfirm);
 
-    // Confirm modal — overlay click
+    // Confirm modal Â— overlay click
     qs('#confirm-modal').addEventListener('click', function(e) {
         if (e.target === this) closeConfirm();
     });
 
-    // Detail modal — close button
+    // Detail modal Â— close button
     qs('#detail-close-btn').addEventListener('click', closeDetailModal);
 
-    // Detail modal — overlay click
+    // Detail modal Â— overlay click
     qs('#event-detail-modal').addEventListener('click', function(e) {
         if (e.target === this) closeDetailModal();
     });
