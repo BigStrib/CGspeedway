@@ -1164,15 +1164,31 @@ input, textarea { font-family: var(--font-main); }
 }
 
 @media (max-width: 768px) {
+    /* 1. Added: Set the background color to match your dark theme */
+    html {
+        background-color: #0b0e14;
+    }
+
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
 
-    .mobile-header { display: flex; }
+    /* 2. Altered: Fixed top bar with dynamic notch padding & theme color */
+    .mobile-header { 
+        display: flex; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        padding-top: calc(env(safe-area-inset-top, 20px) + 8px); 
+        background-color: #0b0e14; 
+    }
 
+    /* 3. Altered: Pushes page content down so it doesn't hide behind the new header spacing */
     .main {
         margin-left: 0;
         padding: 16px;
-        padding-top: calc(var(--header-h) + 16px);
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top, 20px) + 24px);
     }
 
     .section-header { flex-direction: column; }
@@ -1204,8 +1220,6 @@ input, textarea { font-family: var(--font-main); }
 
     .modal-card        { margin: 0; }
     .modal-card-detail { max-width: 100%; }
-
- 
 }
 
 @media (max-width: 480px) {
