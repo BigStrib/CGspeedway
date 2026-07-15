@@ -1172,7 +1172,7 @@ input, textarea { font-family: var(--font-main); }
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
 
-    /* 2. Altered: Increased padding-top to push menu/title/plus button down, and added padding-bottom */
+    /* 2. Altered: Overrides fixed height, aligns items, and sets clean padding */
     .mobile-header { 
         display: flex; 
         position: fixed;
@@ -1180,12 +1180,22 @@ input, textarea { font-family: var(--font-main); }
         left: 0;
         width: 100%;
         z-index: 1000;
-        padding-top: calc(env(safe-area-inset-top, 20px) + 20px); 
-        padding-bottom: 12px;
+        
+        /* Forces the browser to ignore "height: var(--header-h)" so your buttons fit */
+        height: auto !important; 
+        
+        /* Vertically centers the menu, title, and plus buttons */
+        align-items: center; 
+        justify-content: space-between;
+        box-sizing: border-box;
+
+        /* Perfect spacing: notch height + 16px top, 16px bottom */
+        padding-top: calc(env(safe-area-inset-top, 20px) + 16px); 
+        padding-bottom: 16px;
         background-color: #0b0e14; 
     }
 
-    /* 3. Altered: Increased padding-top to push your main page content completely below the taller header */
+    /* 3. Altered: Pushes main content down so it starts exactly below the new header */
     .main {
         margin-left: 0;
         padding: 16px;
