@@ -1164,7 +1164,7 @@ input, textarea { font-family: var(--font-main); }
 }
 
 @media (max-width: 768px) {
-    /* 1. Added: Set the background color to match your dark theme */
+    /* 1. Set the background color to match your dark theme */
     html {
         background-color: #0b0e14;
     }
@@ -1172,7 +1172,7 @@ input, textarea { font-family: var(--font-main); }
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
 
-    /* 2. Altered: Fixed top bar with dynamic notch padding & theme color */
+    /* 2. Altered: Increased padding-top to push menu/title/plus button down, and added padding-bottom */
     .mobile-header { 
         display: flex; 
         position: fixed;
@@ -1180,15 +1180,16 @@ input, textarea { font-family: var(--font-main); }
         left: 0;
         width: 100%;
         z-index: 1000;
-        padding-top: calc(env(safe-area-inset-top, 20px) + 8px); 
+        padding-top: calc(env(safe-area-inset-top, 20px) + 20px); 
+        padding-bottom: 12px;
         background-color: #0b0e14; 
     }
 
-    /* 3. Altered: Pushes page content down so it doesn't hide behind the new header spacing */
+    /* 3. Altered: Increased padding-top to push your main page content completely below the taller header */
     .main {
         margin-left: 0;
         padding: 16px;
-        padding-top: calc(var(--header-h) + env(safe-area-inset-top, 20px) + 24px);
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top, 20px) + 50px);
     }
 
     .section-header { flex-direction: column; }
@@ -1221,6 +1222,7 @@ input, textarea { font-family: var(--font-main); }
     .modal-card        { margin: 0; }
     .modal-card-detail { max-width: 100%; }
 }
+
 
 @media (max-width: 480px) {
     .stats-grid  { grid-template-columns: 1fr; }
