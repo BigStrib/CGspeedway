@@ -1169,17 +1169,22 @@ input, textarea { font-family: var(--font-main); }
         background-color: #0b0e14;
     }
 
-    /* Altered: Added top padding and z-index to keep sidebar items from sliding under the header */
+    /* 2. Altered: Hides whatever the very first element is inside the sidebar (the logo area) */
+    .sidebar > *:first-child {
+        display: none !important;
+    }
+
+    /* 3. Altered: Adjusted padding-top to shift the links down past your top bar */
     .sidebar { 
         transform: translateX(-100%); 
-        padding-top: calc(var(--header-h) + env(safe-area-inset-top, 20px) + 30px);
+        padding-top: calc(env(safe-area-inset-top, 20px) + 75px);
         box-sizing: border-box;
         z-index: 999;
     }
     
     .sidebar.open { transform: translateX(0); }
 
-    /* 2. Overrides fixed height, aligns items, and sets clean padding */
+    /* 4. Overrides fixed height, aligns items, and sets clean padding */
     .mobile-header { 
         display: flex; 
         position: fixed;
@@ -1202,7 +1207,7 @@ input, textarea { font-family: var(--font-main); }
         background-color: #0b0e14; 
     }
 
-    /* 3. Pushes main content down so it starts exactly below the new header */
+    /* 5. Pushes main content down so it starts exactly below the new header */
     .main {
         margin-left: 0;
         padding: 16px;
